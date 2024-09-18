@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lighting Tech Trivia</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        #game {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+
+        #question-counter {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        #question {
+            font-size: 1.3em;
+            color: #444;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            display: inline-block;
+            font-size: 1em;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #score {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #555;
+        }
+
+        #choices button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 10px;
+            background-color: #007BFF;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        #choices button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-left: 4px solid #4CAF50;
+            display: none;
+        }
+
+        /* Style for the horizontal progress bar */
+        #overall-timer-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            margin-top: 20px;
+        }
+
+        #overall-timer-bar {
+            width: 100%;
+            height: 100%;
+            background-color: #4CAF50;
+        }
+
+        @media screen and (max-width: 600px) {
+            #game {
+                padding: 15px;
+                margin: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            button {
+                font-size: 0.9em;
+                padding: 8px 15px;
+            }
+
+            #question {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <h1>Lighting Tech Trivia</h1>
+        <div id="question-counter"></div> <!-- Question counter (e.g., 1/33, 2/33, etc.) -->
+        <div id="question"></div>
+        <div id="choices"></div>
+        <div id="explanation"></div>
+        <button id="next-button" style="display: none;" onclick="nextScenario()">Next</button>
+
+        <!-- Horizontal progress bar for the overall timer -->
+        <div id="overall-timer-bar-container">
+            <div id="overall-timer-bar"></div>
+        </div>
+
+        <div id="score">Score: 0</div>
+        <button id="start-button" onclick="startGame()">Start Game</button> <!-- Start Game button -->
+    </div>
+
+    <script>
+        // Array of 33 lighting tech real-world scenarios with explanations
+        const scenarios = [
+            { 
+                question: "One of the moving head lights stops responding during the show. What’s the first thing you check?", 
+                options: ["Check the DMX cable", "Restart the lighting console", "Switch off the light"],
+                correct: 0,
+                explanation: "A faulty DMX cable is the most common cause of communication failure between lighting equipment."
+            },
+            {
+                question: "The color on several LED fixtures looks off compared to the others. What’s the likely cause?",
+                options: ["The LEDs need recalibration", "The power supply is weak", "DMX channel mismatch"],
+                correct: 2,
+                explanation: "DMX channel mismatches can cause lights to behave differently from others in the group."
+            },
+            {
+                question: "A fog machine stops working during a show. What’s the first thing you should check?",
+                options: ["Check the fluid level", "Reboot the fog machine", "Check the power cable"],
+                correct: 0,
+                explanation: "The fog machine might have run out of fluid, which is often the most common issue during shows."
+            },
+            {
+                question: "The lighting console suddenly crashes in the middle of the show. What's your immediate action?",
+                options: ["Reboot the console", "Switch to backup control", "Fix the power connection"],
+                correct: 1,
+                explanation: "Switching to a backup controller ensures the show continues uninterrupted while troubleshooting the primary console."
+            },
+            {
+                question: "You notice flickering on one of the spotlights during soundcheck. What’s the likely cause?",
+                options: ["Loose power connection", "DMX interference", "Faulty bulb"],
+                correct: 0,
+                explanation: "A loose power connection can cause intermittent flickering in stage lights."
+            },
+            {
+                question: "The show calls for a dramatic strobe effect, but the strobe light isn’t functioning properly. What’s the first step?",
+                options: ["Check the strobe settings in the console", "Switch to a different light", "Change the power cable"],
+                correct: 0,
+                explanation: "First, ensure the strobe settings are correct in the lighting console before moving on to hardware checks."
+            },
+            {
+                question: "During setup, one of the lights keeps moving unexpectedly. What’s the most likely cause?",
+                options: ["DMX addressing issue", "Loose mounting bracket", "Incorrect console control"],
+                correct: 2,
+                explanation: "Incorrect settings on the console can cause unwanted movements from automated fixtures."
+            },
+            {
+                question: "The truss-mounted lights are out of sync with the rest of the lights. What’s the likely problem?",
+                options: ["Incorrect DMX terminator", "Broken DMX chain", "Console malfunction"],
+                correct: 1,
+                explanation: "A broken DMX chain can cause lights further down the chain to fall out of sync."
+            },
+            {
+                question: "One of the Par Can lights isn't turning on. What should you check first?",
+                options: ["Power cable", "DMX address", "Check the bulb"],
+                correct: 2,
+                explanation: "A blown bulb is often the issue with older-style lights like Par Cans."
+            },
+            {
+                question: "You need to match the lighting effect to the beat of the music but notice a slight delay. What should you adjust?",
+                options: ["Latency settings in the lighting software", "DMX refresh rate", "Speaker placement"],
+                correct: 0,
+                explanation: "Latency settings in your lighting software can cause delays between lighting and music sync."
+            },
+            {
+                question: "Your moving head lights stop moving midway through the show. What’s your first troubleshooting step?",
+                options: ["Check the DMX signal", "Replace the power cable", "Reset the lights"],
+                correct: 0,
+                explanation: "A broken or interrupted DMX signal is often the cause when moving heads stop responding."
+            },
+            {
+                question: "You’re setting up lights for an outdoor festival, and a sudden rain shower hits. What’s your first action?",
+                options: ["Cover the lights with rain protection", "Power off the lights", "Unplug the lights from the mains"],
+                correct: 1,
+                explanation: "Powering off the lights immediately protects both the equipment and the crew from electrical hazards."
+            },
+            {
+                question: "The dimmers on your rig aren’t working properly. What’s the most likely cause?",
+                options: ["Incorrect DMX address", "Power surge", "Faulty dimmer pack"],
+                correct: 0,
+                explanation: "Incorrect DMX addressing can cause lights not to dim or behave as expected."
+            },
+            {
+                question: "You notice that the haze is not being distributed evenly on stage. What should you check first?",
+                options: ["The positioning of the fans", "The type of fluid being used", "The DMX settings for the haze machine"],
+                correct: 0,
+                explanation: "Proper fan positioning ensures the haze is evenly distributed across the stage."
+            },
+            {
+                question: "The follow spot operator reports that the follow spot has suddenly gone dim. What could be the cause?",
+                options: ["The bulb is dying", "DMX signal lost", "The follow spot lens is dirty"],
+                correct: 0,
+                explanation: "A dimming bulb is often the first sign that the bulb is about to die and needs replacement."
+            },
+            {
+                question: "The house lights refuse to dim before the performance starts. What should you check first?",
+                options: ["The house light dimmer", "The lighting console", "The power supply"],
+                correct: 1,
+                explanation: "Check the lighting console to ensure that the control is functioning and sending the correct dimming signal."
+            },
+            {
+                question: "Your LED strip lights are showing random flickering. What’s the likely cause?",
+                options: ["Loose power connection", "DMX cable interference", "Overheating LEDs"],
+                correct: 1,
+                explanation: "DMX cable interference can cause signal disruption, resulting in flickering LEDs."
+            },
+            {
+                question: "The client requests that you change all stage lighting colors to match a specific RGB value. What tool do you use?",
+                options: ["Lighting console", "RGB calculator", "Lighting fixture manual"],
+                correct: 0,
+                explanation: "The lighting console allows you to program specific RGB values into the stage lights."
+            },
+            {
+                question: "You notice a significant delay between pressing a button on the lighting console and the light’s response. What should you adjust?",
+                options: ["Latency settings", "DMX refresh rate", "Power supply"],
+                correct: 1,
+                explanation: "DMX refresh rate settings can cause delays between the lighting console and the lights."
+            },
+            {
+                question: "The lighting director requests you to create a specific gobo effect on the stage. What should you check first?",
+                options: ["Gobo wheel in the light fixture", "The gobo in the console settings", "Fixture power supply"],
+                correct: 1,
+                explanation: "Ensure the correct gobo is selected and programmed in the lighting console settings."
+            },
+            {
+                question: "During soundcheck, you notice that one of the lights is pointing in the wrong direction. What’s the most likely cause?",
+                options: ["Incorrect DMX settings", "The light was accidentally moved", "The pan/tilt motor is damaged"],
+                correct: 2,
+                explanation: "A malfunctioning pan/tilt motor can cause incorrect light positioning."
+            },
+            {
+                question: "You’re tasked with setting up a light show for a band performance. What’s the first thing you do?",
+                options: ["Consult with the band for their lighting preferences", "Program the lighting sequence", "Test all lighting equipment"],
+                correct: 0,
+                explanation: "Consulting with the band ensures that the lighting matches the desired mood and flow of their performance."
+            },
+            {
+                question: "The fog machine is releasing too much smoke during the performance. What should you adjust?",
+                options: ["DMX output level", "Fluid type", "Fan settings"],
+                correct: 0,
+                explanation: "Adjusting the DMX output controls the amount of smoke the fog machine releases."
+            },
+            {
+                question: "One of your moving heads is not following the programmed sequence. What’s your first troubleshooting step?",
+                options: ["Check the DMX address", "Reboot the light", "Check the fixture’s mounting position"],
+                correct: 0,
+                explanation: "Incorrect DMX addressing is a common cause when lights don’t follow programmed sequences."
+            },
+            {
+                question: "You’re using a follow spot during a live event, and the operator reports that the spot is difficult to control. What could be wrong?",
+                options: ["The follow spot’s handle is loose", "The follow spot’s motor is faulty", "The operator needs more training"],
+                correct: 0,
+                explanation: "A loose handle can make it difficult to control a follow spot with precision."
+            },
+            {
+                question: "A high-profile event requires seamless color transitions on stage. What lighting setting should you focus on?",
+                options: ["Fade time and color mixing", "Intensity control", "DMX refresh rate"],
+                correct: 0,
+                explanation: "Proper fade time and color mixing ensure smooth transitions during a live event."
+            },
+            {
+                question: "The uplights on the stage are not syncing with the main lighting effects. What could be the issue?",
+                options: ["The DMX chain is broken", "The power supply is weak", "The lights are in sound-active mode"],
+                correct: 0,
+                explanation: "A broken DMX chain prevents the uplights from receiving the proper commands."
+            },
+            {
+                question: "A client requests a specific lighting design for a corporate event, but the event space has limited power outlets. What’s your best approach?",
+                options: ["Use low-power LED fixtures", "Reduce the number of lights", "Use extension cords to reach available outlets"],
+                correct: 0,
+                explanation: "Using low-power LED fixtures minimizes power consumption while still achieving the desired lighting effect."
+            },
+            {
+                question: "You’re programming lights for a concert, and the moving heads are responding slower than expected. What setting should you adjust?",
+                options: ["Speed and pan/tilt timing", "DMX refresh rate", "Power supply"],
+                correct: 0,
+                explanation: "Adjusting the speed and pan/tilt timing improves the responsiveness of moving heads during dynamic sequences."
+            },
+            {
+                question: "You notice a color mismatch between two identical LED lights. What’s the first thing you should check?",
+                options: ["DMX channel settings", "Power output", "Fixture calibration"],
+                correct: 0,
+                explanation: "Incorrect DMX channel settings can cause lights to display different colors despite being programmed identically."
+            }
+        ];
+
+        let score = 0;
+        let currentScenarioIndex = 0;
+        let overallTimer;
+        let overallTimeLeft = 69; // 69 seconds for the whole game
+
+        // Start the game
+        function startGame() {
+            score = 0;
+            currentScenarioIndex = 0;
+            overallTimeLeft = 69;  // Reset the overall timer
+            document.getElementById("score").innerText = `Score: ${score}`;
+            document.getElementById("start-button").style.display = "none"; // Hide start button after the game starts
+
+            shuffleScenarios(); // Shuffle the questions order
+            startOverallTimer();
+            nextScenario();
+        }
+
+        // Shuffle the scenarios array
+        function shuffleScenarios() {
+            for (let i = scenarios.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
+            }
+        }
+
+        // Generate a new scenario
+        function nextScenario() {
+            // Hide the "Next" button
+            document.getElementById("next-button").style.display = "none";
+
+            // Check if the game is over
+            if (currentScenarioIndex >= scenarios.length) {
+                alert("Game over! Your final score is " + score);
+                return;
+            }
+
+            // Update question counter
+            document.getElementById("question-counter").innerText = `Question ${currentScenarioIndex + 1}/33`;
+
+            const scenario = scenarios[currentScenarioIndex];
+            document.getElementById("question").innerText = scenario.question;
+            const choicesDiv = document.getElementById("choices");
+            choicesDiv.innerHTML = ""; // Clear old choices
+            document.getElementById("explanation").style.display = "none"; // Hide previous explanation
+
+            // Create buttons for each option
+            scenario.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.innerText = option;
+                button.onclick = () => checkAnswer(index);
+                choicesDiv.appendChild(button);
+            });
+        }
+
+        // Check if the selected answer is correct
+        function checkAnswer(selectedIndex) {
+            const scenario = scenarios[currentScenarioIndex];
+
+            // Disable answer buttons after selection
+            const buttons = document.querySelectorAll('#choices button');
+            buttons.forEach(button => button.disabled = true);
+
+            const explanationElement = document.getElementById("explanation");
+            if (selectedIndex === scenario.correct) {
+                explanationElement.innerHTML = `<strong>Correct!</strong> ${scenario.explanation}`;
+                score += 10;
+            } else {
+                explanationElement.innerHTML = `<strong>Wrong!</strong> ${scenario.explanation}`;
+                score -= 5;
+            }
+
+            document.getElementById("score").innerText = `Score: ${score}`;
+            explanationElement.style.display = "block";  // Show the explanation
+            document.getElementById("next-button").style.display = "block";  // Show "Next" button
+
+            currentScenarioIndex++;
+        }
+
+        // Start the overall game timer (69 seconds total)
+        function startOverallTimer() {
+            const overallTimerBar = document.getElementById("overall-timer-bar");
+
+            clearInterval(overallTimer);
+            overallTimer = setInterval(() => {
+                const progressPercentage = (overallTimeLeft / 69) * 100;
+                overallTimerBar.style.width = progressPercentage + "%";  // Update progress bar width
+
+                if (overallTimeLeft <= 0) {
+                    clearInterval(overallTimer);  // Stop the timer
+                    alert("Time's up for the entire game!");
+                    return;
+                }
+                overallTimeLeft -= 1;  // Decrease the time left
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
